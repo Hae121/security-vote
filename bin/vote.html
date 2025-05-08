@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>전자봉투 투표</title>
+  <style>
+    body {
+      background: #f9fafb;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+    }
+    .vote-box {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .option {
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #15803d;
+    }
+  </style>
+</head>
+<body>
+  <div class="vote-box">
+    <h2>📩 찬반 투표</h2>
+    <p>홍길동 후보를 지지하십니까?</p>
+    <form onsubmit="submitVote(event)">
+      <div class="option">
+        <input type="radio" id="agree" name="vote" value="찬성" />
+        <label for="agree">찬성</label>
+      </div>
+      <div class="option">
+        <input type="radio" id="disagree" name="vote" value="반대" />
+        <label for="disagree">반대</label>
+      </div>
+      <button type="submit">투표 제출</button>
+    </form>
+  </div>
+
+  <script>
+    function submitVote(e) {
+      e.preventDefault();
+      const vote = document.querySelector('input[name="vote"]:checked');
+      if (!vote) {
+        alert("찬성 또는 반대를 선택해주세요!");
+        return;
+      }
+      alert(`'${vote.value}'에 투표 완료되었습니다. ✅`);
+    }
+  </script>
+</body>
+</html>
