@@ -10,7 +10,9 @@
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       justify-content: center;
-      padding-top: 50px;
+      height: 100vh;
+align-items: center;
+
     }
     .vote-box {
       background: white;
@@ -69,7 +71,9 @@
         alert("찬성 또는 반대를 선택해주세요!");
         return;
       }
+      // 선택 확인 메시지 후 페이지 이동
       alert(`'${vote.value}'에 투표 완료되었습니다. ✅`);
+      window.location.href = "complete.html";
     }
   </script>
 </body>

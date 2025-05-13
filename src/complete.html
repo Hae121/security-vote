@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>투표 완료</title>
+  <style>
+    body {
+      background: #f0f4f8;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .complete-box {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #16a34a;
+    }
+    p {
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 12px 20px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+  </style>
+</head>
+<body>
+  <div class="complete-box">
+    <h2>✅ 투표 완료</h2>
+    <p>소중한 한 표가 성공적으로 제출되었습니다.</p>
+    <button onclick="goToResult()">결과 확인하기</button>
+  </div>
+
+  <script>
+    function goToResult() {
+      window.location.href = "result.html";
+    }
+  </script>
+</body>
+</html>
