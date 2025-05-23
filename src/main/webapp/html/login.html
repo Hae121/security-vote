@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>온라인 투표 - 로그인</title>
+  <style>
+    body {
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .login-box {
+      background: white;
+      padding: 30px 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    .login-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .login-box button:hover {
+      background: #4338ca;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>로그인</h2>
+    <input type="text" id="userID" placeholder="아이디" />
+    <input type="password" id="userPW" placeholder="비밀번호" />
+    <button onclick="goToVote()">로그인</button>
+  </div>
+
+  <script>
+    function goToVote() {
+      window.location.href = "vote.html";
+    }
+  </script>
+</body>
+</html>
