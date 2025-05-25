@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>투표 결과 확인</title>
+  <style>
+    body {
+      background: #f9fafb;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      height: 100vh;
+      align-items: center;
+    }
+    .result-box {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 320px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    .bar-container {
+      background-color: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+      height: 30px;
+    }
+    .bar {
+      height: 100%;
+      text-align: right;
+      padding-right: 10px;
+      color: white;
+      line-height: 30px;
+      font-weight: bold;
+    }
+    .color1 { background-color: #16a34a; }
+    .color2 { background-color: #2563eb; }
+    .color3 { background-color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="result-box">
+    <h2>📊 투표 결과</h2>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    async function loadResults() {
+      try {
+        const res = await fetch("result"); // 서블릿 경로
+        const data = await res.json(); // JSON 형식: { "후보자1": 2, "후보자2": 1, ... }
+
+        const totalVotes = Object.values(data).reduce((a, b) => a + b, 0);
+        const colors = ["color1", "color2", "color3"];
+        const container = document.getElementById("results");
+        container.innerHTML = "";
+
+        Object.entries(data).forEach(([name, count], index) => {
+          const percent = totalVotes > 0 ? (count * 100 / totalVotes).toFixed(1) : 0;
+
+          container.innerHTML += `
+            <p>${name}</p>
+            <div class="bar-container">
+              <div class="bar ${colors[index % colors.length]}" style="width: ${percent}%;">
+                ${percent}%
+              </div>
+            </div>
+          `;
+        });
+
+      } catch (err) {
+        console.error("결과 불러오기 실패:", err);
+        document.getElementById("results").innerText = "결과를 불러올 수 없습니다.";
+      }
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>

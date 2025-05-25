@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>전자봉투 투표</title>
+  <style>
+    body {
+      background: #f9fafb;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .vote-box {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    p {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .option {
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #15803d;
+    }
+  </style>
+</head>
+<body>
+  <div class="vote-box">
+    <h2>🗳️ 후보자 투표</h2>
+    <p>투표할 후보자를 선택해주세요</p>
+    <form onsubmit="submitVote(event)">
+      <div class="option">
+        <input type="radio" id="cand1" name="vote" value="후보자1" />
+        <label for="cand1">후보자1</label>
+      </div>
+      <div class="option">
+        <input type="radio" id="cand2" name="vote" value="후보자2" />
+        <label for="cand2">후보자2</label>
+      </div>
+      <div class="option">
+        <input type="radio" id="cand3" name="vote" value="후보자3" />
+        <label for="cand3">후보자3</label>
+      </div>
+      <button type="submit">투표 제출</button>
+    </form>
+  </div>
+
+  <!-- 🔐 암호화를 위한 forge.js 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+
+<script>
+async function submitVote(e) {
+  e.preventDefault();
+  const vote = document.querySelector('input[name="vote"]:checked');
+  if (!vote) {
+    alert("후보자를 선택해주세요!");
+    return;
+  }
+
+  const voteValue = vote.value;
+
+  try {
+    // 🔑 최신 공개키 요청 (캐시 무력화)
+    const pubKeyResponse = await fetch("keys/public.key?ts=" + Date.now());
+    const pubKeyBuf = await pubKeyResponse.arrayBuffer();
+    const pubKeyDer = new Uint8Array(pubKeyBuf);
+    const forge = window.forge;
+    const publicKey = forge.pki.publicKeyFromAsn1(
+      forge.asn1.fromDer(forge.util.createBuffer(pubKeyDer))
+    );
+
+    // 🔐 AES 키 및 IV 생성
+    const aesKey = forge.random.getBytesSync(16);
+    const iv = forge.random.getBytesSync(16);
+
+    // 🔐 투표 내용 암호화
+    const cipher = forge.cipher.createCipher('AES-CBC', aesKey);
+    cipher.start({ iv: iv });
+    cipher.update(forge.util.createBuffer(voteValue, 'utf8'));
+    cipher.finish();
+    const encryptedVote = forge.util.encode64(cipher.output.getBytes());
+
+    // 🔐 AES 키를 공개키로 암호화
+    const encryptedKey = forge.util.encode64(publicKey.encrypt(aesKey));
+    const ivBase64 = forge.util.encode64(iv);
+
+    // 전송할 데이터 구성
+    const formData = new URLSearchParams();
+    formData.append("encryptedVote", encryptedVote);
+    formData.append("encryptedKey", encryptedKey);
+    formData.append("iv", ivBase64);
+
+    await fetch("vote", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: formData.toString()
+    });
+
+    alert(`'${voteValue}'님에게 투표 완료되었습니다.`);
+    window.location.href = "complete.html";
+
+  } catch (err) {
+    console.error("⚠️ 투표 처리 중 오류 발생:", err);
+    alert("투표 처리 중 오류가 발생했습니다.");
+  }
+}
+</script>
+  
+</body>
+</html>
