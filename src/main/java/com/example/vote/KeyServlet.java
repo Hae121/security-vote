@@ -40,7 +40,7 @@ public class KeyServlet extends HttpServlet {
                 generator.initialize(2048);
                 keyPair = generator.generateKeyPair();
                 keyPairs.put(userId, keyPair);
-                System.out.println("✅ 새 키 쌍 생성: " + userId);
+                System.out.println("새 키 쌍 생성: " + userId);
             } catch (NoSuchAlgorithmException e) {
                 throw new ServletException("키 생성 실패", e);
             }

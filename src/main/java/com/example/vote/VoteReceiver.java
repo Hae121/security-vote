@@ -30,9 +30,9 @@ public class VoteReceiver extends HttpServlet {
 	public void init() throws ServletException {
 		try {
 			KeyManager.initializeKeys(getServletContext()); // 키 초기화
-			System.out.println("✅ VoteReceiver 초기화 완료");
+			System.out.println(" VoteReceiver 초기화 완료");
 		} catch (Exception e) {
-			throw new ServletException("❌ 키 초기화 실패", e);
+			throw new ServletException(" 키 초기화 실패", e);
 		}
 	}
 
