@@ -34,7 +34,7 @@ public class VotingSystem {
     private void initializeDefaultUsers() {
         try {
             // 기본 사용자 생성
-            userManager.createUser("hae", "1234", false);
+            userManager.createUser("user", "1234", false);
             userManager.createUser("admin", "admin123", true);
             System.out.println("👥 기본 사용자 계정 생성 완료");
         } catch (Exception e) {

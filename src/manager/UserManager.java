@@ -2,7 +2,6 @@ package manager;
 
 import java.io.*;
 import java.security.*;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 import dto.UserDTO;
@@ -12,7 +11,7 @@ public class UserManager {
     private static final String USER_DATA_DIR = "user_data";
     private static final String USER_INFO_FILE = "users.dat";
     
-    public void createUser(String id, String password, boolean isAdmin) throws Exception {
+    public void createUser(String id, char[] password, boolean isAdmin) throws Exception {
         File userDir = new File(USER_DATA_DIR, id);
         userDir.mkdirs();
         
@@ -42,6 +41,15 @@ public class UserManager {
         saveUserInfo(id, hashedPassword, salt, isAdmin);
         
         System.out.println("✅ 사용자 " + id + " 생성 완료 (관리자: " + isAdmin + ")");
+    }
+    
+    public void createUser(String id, String password, boolean isAdmin) throws Exception {
+        char[] passwordChars = password.toCharArray();
+        try {
+            createUser(id, passwordChars, isAdmin);
+        } finally {
+            Arrays.fill(passwordChars, ' ');
+        }
     }
     
     private boolean userExists(String id) {
@@ -88,7 +96,7 @@ public class UserManager {
         }
     }
     
-    public UserDTO authenticate(String id, String password) throws Exception {
+    public UserDTO authenticate(String id, char[] password) throws Exception {
         File userInfoFile = new File(USER_DATA_DIR, USER_INFO_FILE);
         if (!userInfoFile.exists()) {
             return null;
@@ -118,6 +126,57 @@ public class UserManager {
         return null;
     }
     
+    // 오버로드된 메서드 - 기존 호환성 유지
+    public UserDTO authenticate(String id, String password) throws Exception {
+        char[] passwordChars = password.toCharArray();
+        try {
+            return authenticate(id, passwordChars);
+        } finally {
+            Arrays.fill(passwordChars, ' ');
+        }
+    }
+    
+    // Console을 사용한 안전한 비밀번호 입력
+    public UserDTO authenticateWithConsole(String id) throws Exception {
+        Console console = System.console();
+        if (console != null) {
+            char[] passwordChars = console.readPassword("🔐 비밀번호: ");
+            try {
+                return authenticate(id, passwordChars);
+            } finally {
+                // 메모리에서 즉시 제거
+                Arrays.fill(passwordChars, ' ');
+            }
+        } else {
+            System.err.println("❌ Console을 사용할 수 없습니다. IDE에서 실행 시 제한될 수 있습니다.");
+            return null;
+        }
+    }
+    
+    // Console을 사용한 안전한 사용자 생성
+    public void createUserWithConsole(String id, boolean isAdmin) throws Exception {
+        Console console = System.console();
+        if (console != null) {
+            char[] passwordChars = console.readPassword("🔐 새 비밀번호: ");
+            char[] confirmChars = console.readPassword("🔐 비밀번호 확인: ");
+            
+            try {
+                // 비밀번호 일치 확인
+                if (Arrays.equals(passwordChars, confirmChars)) {
+                    createUser(id, passwordChars, isAdmin);
+                } else {
+                    System.err.println("❌ 비밀번호가 일치하지 않습니다.");
+                }
+            } finally {
+                // 메모리에서 즉시 제거
+                Arrays.fill(passwordChars, ' ');
+                Arrays.fill(confirmChars, ' ');
+            }
+        } else {
+            System.err.println("❌ Console을 사용할 수 없습니다. IDE에서 실행 시 제한될 수 있습니다.");
+        }
+    }
+    
     public PublicKey loadUserPublicKey(String userId) throws Exception {
         String publicKeyPath = new File(USER_DATA_DIR, userId + "/public.key").getAbsolutePath();
         return RSAUtil.loadPublicKey(publicKeyPath);
@@ -135,15 +194,31 @@ public class UserManager {
         return Base64.getEncoder().encodeToString(salt);
     }
     
-    private String hashPasswordWithSalt(String password, String salt) throws Exception {
+    private String hashPasswordWithSalt(char[] password, String salt) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        String saltedPassword = password + salt;
-        byte[] hashedBytes = digest.digest(saltedPassword.getBytes("UTF-8"));
         
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashedBytes) {
-            sb.append(String.format("%02x", b));
+        // char[]를 byte[]로 안전하게 변환
+        byte[] passwordBytes = new byte[password.length * 2];
+        for (int i = 0; i < password.length; i++) {
+            passwordBytes[i * 2] = (byte) (password[i] >> 8);
+            passwordBytes[i * 2 + 1] = (byte) password[i];
         }
-        return sb.toString();
+        
+        try {
+            // 솔트와 함께 해시화
+            digest.update(passwordBytes);
+            digest.update(salt.getBytes("UTF-8"));
+            byte[] hashedBytes = digest.digest();
+            
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } finally {
+            // 임시 바이트 배열 초기화
+            Arrays.fill(passwordBytes, (byte) 0);
+        }
     }
+    
 }
