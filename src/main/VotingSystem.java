@@ -1,14 +1,15 @@
 package main;
 
-import java.io.Console;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 
 import dto.UserDTO;
+import exception.InputException;
 import manager.UserManager;
 import manager.VoteManager;
+import util.ConsoleInputHandler;
 
 public class VotingSystem {
     private static final String USER_DATA_DIR = "user_data";
@@ -18,11 +19,13 @@ public class VotingSystem {
     private UserManager userManager;
     private VoteManager voteManager;
     private Scanner sc;
+    private ConsoleInputHandler inputHandler;
     
     public VotingSystem() {
         this.userManager = new UserManager();
         this.voteManager = new VoteManager();
         this.sc = new Scanner(System.in);
+        this.inputHandler = new ConsoleInputHandler(sc);
         initializeDirectories();
         initializeDefaultUsers();
     }
@@ -50,8 +53,7 @@ public class VotingSystem {
         while (true) {
             try {
                 showMainMenu();
-                int choice = sc.nextInt();
-                sc.nextLine();
+                int choice = inputHandler.getMenuChoice("선택: ", 1, 3);
                 
                 if (choice == 1) {
                     login();
@@ -60,28 +62,31 @@ public class VotingSystem {
                     return;
                 } else if (choice == 3) {
                     resetVoteData();
-                } else {
-                    System.out.println("잘못된 선택입니다.");
                 }
+                
+            } catch (InputException e) {
+                System.err.println("입력 오류: " + e.getMessage());
+                System.out.println("메인 메뉴로 돌아갑니다.");
             } catch (Exception e) {
-                System.err.println("오류 발생: " + e.getMessage());
-                sc.nextLine();
+                System.err.println("시스템 오류 발생: " + e.getMessage());
+                System.out.println("메인 메뉴로 돌아갑니다.");
             }
         }
     }
 
     private void resetVoteData() {
-        System.out.print("=모든 투표 데이터를 초기화하시겠습니까? (y/n): ");
-        String confirm = sc.nextLine().trim().toLowerCase();
-        
-        if (confirm.equals("y")) {
-            try {
+        try {
+            boolean confirm = inputHandler.getConfirmation("모든 투표 데이터를 초기화하시겠습니까? (y/n): ");
+            
+            if (confirm) {
                 voteManager.resetAllVoteData();
-            } catch (Exception e) {
-                System.err.println("투표 데이터 초기화 오류: " + e.getMessage());
+            } else {
+                System.out.println("초기화가 취소되었습니다.");
             }
-        } else {
-            System.out.println("초기화가 취소되었습니다.");
+        } catch (InputException e) {
+            System.err.println("입력 오류: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("투표 데이터 초기화 오류: " + e.getMessage());
         }
     }
     
@@ -90,17 +95,12 @@ public class VotingSystem {
         System.out.println("1. 로그인");
         System.out.println("2. 종료");
         System.out.println("3. 투표 데이터 초기화");
-        System.out.print("선택: ");
     }
+    
     private void login() {
-        Console console = System.console();
-        
-        System.out.print("사용자 ID: ");
-        String id = sc.nextLine().trim();
-        
-        if (console != null) {
-            System.out.print("비밀번호: ");
-            char[] password = console.readPassword();
+        try {
+            String id = inputHandler.getUserId("사용자 ID: ");
+            char[] password = inputHandler.getPassword("비밀번호: ");
             
             try {
                 UserDTO user = userManager.authenticate(id, password);
@@ -118,50 +118,55 @@ public class VotingSystem {
             } catch (Exception e) {
                 System.err.println("인증 오류: " + e.getMessage());
             } finally {
-                Arrays.fill(password, ' ');
+                if (password != null) {
+                    Arrays.fill(password, ' ');
+                }
             }
-        } else { 
-            System.err.println("Console을 사용할 수 없습니다.");
+            
+        } catch (InputException e) {
+            System.err.println("로그인 입력 오류: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("로그인 처리 중 오류 발생: " + e.getMessage());
         }
     }
     
     private void userMenu(UserDTO user) {
         while (true) {
-            System.out.println("\n사용자 메뉴 - " + user.getId());
-            System.out.println("1. 투표하기");
-            System.out.println("2. 로그아웃");
-            System.out.print("선택: ");
-            
             try {
-                int choice = sc.nextInt();
-                sc.nextLine();
+                System.out.println("\n사용자 메뉴 - " + user.getId());
+                System.out.println("1. 투표하기");
+                System.out.println("2. 로그아웃");
+                
+                int choice = inputHandler.getMenuChoice("선택: ", 1, 2);
                 
                 if (choice == 1) {
                     vote(user);
                 } else if (choice == 2) {
                     System.out.println("로그아웃 되었습니다.");
                     return;
-                } else {
-                    System.out.println("잘못된 선택입니다.");
+                }
+                
+            } catch (InputException e) {
+                System.err.println("메뉴 선택 오류: " + e.getMessage());
+                if (e.getErrorType() == InputException.InputErrorType.INVALID_MENU_CHOICE) {
+                    System.out.println("메인 메뉴로 돌아갑니다.");
+                    return;
                 }
             } catch (Exception e) {
-                System.err.println("오류 발생: " + e.getMessage());
-                sc.nextLine();
+                System.err.println("사용자 메뉴 오류: " + e.getMessage());
             }
         }
     }
     
     private void adminMenu(UserDTO user) {
         while (true) {
-            System.out.println("\n관리자 메뉴 - " + user.getId());
-            System.out.println("1. 투표 결과 확인");
-            System.out.println("2. 투표 데이터 검증");
-            System.out.println("3. 로그아웃");
-            System.out.print("선택: ");
-            
             try {
-                int choice = sc.nextInt();
-                sc.nextLine();
+                System.out.println("\n관리자 메뉴 - " + user.getId());
+                System.out.println("1. 투표 결과 확인");
+                System.out.println("2. 투표 데이터 검증");
+                System.out.println("3. 로그아웃");
+                
+                int choice = inputHandler.getMenuChoice("선택: ", 1, 3);
                 
                 if (choice == 1) {
                     showVoteResults();
@@ -170,12 +175,16 @@ public class VotingSystem {
                 } else if (choice == 3) {
                     System.out.println("로그아웃 되었습니다.");
                     return;
-                } else {
-                    System.out.println("잘못된 선택입니다.");
+                }
+                
+            } catch (InputException e) {
+                System.err.println("메뉴 선택 오류: " + e.getMessage());
+                if (e.getErrorType() == InputException.InputErrorType.INVALID_MENU_CHOICE) {
+                    System.out.println("메인 메뉴로 돌아갑니다.");
+                    return;
                 }
             } catch (Exception e) {
-                System.err.println("오류 발생: " + e.getMessage());
-                sc.nextLine();
+                System.err.println("관리자 메뉴 오류: " + e.getMessage());
             }
         }
     }
@@ -185,7 +194,6 @@ public class VotingSystem {
             if (voteManager.hasVoted(user.getId())) {
                 System.out.println("이미 투표하셨습니다. 중복 투표는 불가능합니다.");
                 return;
-            } else {
             }
             
             System.out.println("\n투표 후보자 목록:");
@@ -193,30 +201,26 @@ public class VotingSystem {
                 System.out.println((i + 1) + ". " + CANDIDATES[i]);
             }
             
-            System.out.print("투표할 후보자 번호를 선택하세요: ");
-            int choice = sc.nextInt();
-            sc.nextLine();
-            
-            if (choice < 1 || choice > CANDIDATES.length) {
-                System.out.println("잘못된 후보자 번호입니다.");
-                return;
-            } else { } //옳은 후보자 번호 선택함
+            int choice = inputHandler.getCandidateChoice("투표할 후보자 번호를 선택하세요: ", CANDIDATES.length);
             
             String selectedCandidate = CANDIDATES[choice - 1];
             System.out.println("선택한 후보자: " + selectedCandidate);
-            System.out.print("투표를 확정하시겠습니까? (y/n): ");
-            String confirm = sc.nextLine().trim().toLowerCase();
             
-            if (confirm.equals("y")) {
+            boolean confirm = inputHandler.getConfirmation("투표를 확정하시겠습니까? (y/n): ");
+            
+            if (confirm) {
                 voteManager.castVote(user.getId(), selectedCandidate);
                 System.out.println("투표가 완료되었습니다!");
             } else {
                 System.out.println("투표가 취소되었습니다.");
             }
             
-        } catch (Exception e) {
+        } catch (InputException e) {
+            System.err.println("투표 입력 오류: " + e.getMessage());
+        } catch (IllegalStateException e) {
             System.err.println("투표 오류: " + e.getMessage());
-            sc.nextLine();
+        } catch (Exception e) {
+            System.err.println("투표 처리 중 오류 발생: " + e.getMessage());
         }
     }
     
