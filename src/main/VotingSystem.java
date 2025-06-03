@@ -99,8 +99,8 @@ public class VotingSystem {
     
     private void login() {
         try {
-            String id = inputHandler.getUserId("사용자 ID: ");
-            char[] password = inputHandler.getPassword("비밀번호: ");
+            String id = inputHandler.getUserId("ID: ");
+            char[] password = inputHandler.getPassword("PW: ");
             
             try {
                 UserDTO user = userManager.authenticate(id, password);
