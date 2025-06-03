@@ -24,17 +24,17 @@ public class VoteManager {
         File voterRecordFile = new File(VOTE_DATA_DIR, VOTER_RECORD_FILE);
         if (!voterRecordFile.exists()) {
             return false;
-        }
+        } else { } //파일이 있음
         
         try (BufferedReader reader = new BufferedReader(new FileReader(voterRecordFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().equals(userId)) {
                     return true;
-                }
+                } else { } //catch 됨
             }
         } catch (Exception e) {
-            System.err.println("❌ 투표 기록 확인 오류: " + e.getMessage());
+            System.err.println("투표 기록 확인 오류: " + e.getMessage());
         }
         
         return false;
@@ -43,33 +43,27 @@ public class VoteManager {
     public void castVote(String userId, String candidate) throws Exception {
         if (hasVoted(userId)) {
             throw new IllegalStateException("이미 투표한 사용자입니다.");
-        }
+        } else { } //투표하지 않은 사용자
         
-        System.out.println("🔐 전자봉투 기술을 사용하여 투표를 암호화하는 중...");
+        System.out.println("전자봉투 기술을 사용하여 투표를 암호화하는 중...");
         
-        // 1. AES 키 생성
         SecretKey aesKey = AESUtil.generateAESKey();
         byte[] iv = AESUtil.generateIV();
         
-        // 2. 투표 내용을 AES로 암호화
         String encryptedVote = AESUtil.encrypt(candidate, aesKey, iv);
         
-        // 3. 사용자의 공개키로 AES 키 암호화 (전자봉투)
         PublicKey userPublicKey = userManager.loadUserPublicKey(userId);
         String encryptedAESKey = RSAUtil.encryptAESKey(aesKey.getEncoded(), userPublicKey);
         
-        // 4. 디지털 서명 생성
         PrivateKey userPrivateKey = userManager.loadUserPrivateKey(userId);
         String signature = createDigitalSignature(candidate, userPrivateKey);
         
-        // 5. 투표 데이터 저장
         String voteId = UUID.randomUUID().toString();
         saveEncryptedVote(voteId, userId, encryptedVote, encryptedAESKey, iv, signature);
         
-        // 6. 투표자 기록
         recordVoter(userId);
         
-        System.out.println("✅ 전자봉투로 보호된 투표가 저장되었습니다.");
+        System.out.println("전자봉투로 보호된 투표가 저장되었습니다.");
     }
     
     private void saveEncryptedVote(String voteId, String userId, String encryptedVote, 
@@ -109,7 +103,7 @@ public class VoteManager {
         
         if (!voteDir.exists() || !voteDir.isDirectory()) {
             return results;
-        }
+        } else { } //파일이 있음
         
         File[] voteFiles = voteDir.listFiles((dir, name) -> name.startsWith("vote_") && name.endsWith(".dat"));
         if (voteFiles == null) return results;
@@ -119,9 +113,9 @@ public class VoteManager {
                 String decryptedVote = decryptVote(voteFile);
                 if (decryptedVote != null) {
                     results.put(decryptedVote, results.getOrDefault(decryptedVote, 0) + 1);
-                }
+                } else { } //파일이 있음
             } catch (Exception e) {
-                System.err.println("⚠️  투표 파일 복호화 실패: " + voteFile.getName() + " - " + e.getMessage());
+                System.err.println("투표 파일 복호화 실패: " + voteFile.getName() + " - " + e.getMessage());
             }
         }
         
@@ -136,12 +130,10 @@ public class VoteManager {
         String encryptedKey = voteData.get("ENCRYPTED_KEY");
         String ivBase64 = voteData.get("IV");
         
-        // 사용자의 개인키로 AES 키 복호화
         PrivateKey userPrivateKey = userManager.loadUserPrivateKey(userId);
         byte[] aesKeyBytes = RSAUtil.decryptAESKey(encryptedKey, userPrivateKey);
         SecretKey aesKey = AESUtil.decodeKey(Base64.getEncoder().encodeToString(aesKeyBytes));
         
-        // AES로 투표 내용 복호화
         byte[] iv = Base64.getDecoder().decode(ivBase64);
         String decryptedVote = AESUtil.decrypt(encryptedVote, aesKey, iv);
         
@@ -158,22 +150,22 @@ public class VoteManager {
         int totalVotes = voteFiles.length;
         int validVotes = 0;
         
-        System.out.println("🔍 투표 데이터 검증 시작...");
+        System.out.println("투표 데이터 검증 시작...");
         
         for (File voteFile : voteFiles) {
             try {
                 if (verifyVoteIntegrity(voteFile)) {
                     validVotes++;
-                    System.out.println("✅ " + voteFile.getName() + " - 유효");
+                    System.out.println(voteFile.getName() + " - 유효");
                 } else {
-                    System.out.println("❌ " + voteFile.getName() + " - 무효");
+                    System.out.println(voteFile.getName() + " - 무효");
                 }
             } catch (Exception e) {
-                System.out.println("⚠️  " + voteFile.getName() + " - 검증 오류: " + e.getMessage());
+                System.out.println(voteFile.getName() + " - 검증 오류: " + e.getMessage());
             }
         }
         
-        System.out.println("📊 검증 결과: " + validVotes + "/" + totalVotes + " 투표가 유효합니다.");
+        System.out.println("검증 결과: " + validVotes + "/" + totalVotes + " 투표가 유효합니다.");
         return validVotes == totalVotes;
     }
     
@@ -183,10 +175,8 @@ public class VoteManager {
         String userId = voteData.get("USER_ID");
         String signature = voteData.get("SIGNATURE");
         
-        // 실제 투표 내용 복호화
         String decryptedVote = decryptVote(voteFile);
         
-        // 디지털 서명 검증
         PublicKey userPublicKey = userManager.loadUserPublicKey(userId);
         return verifyDigitalSignature(decryptedVote, signature, userPublicKey);
     }
@@ -215,44 +205,37 @@ public class VoteManager {
         return data;
     }
     
-    /**
-     * 모든 투표 데이터를 초기화합니다.
-     * - 투표 파일들 삭제
-     * - 투표자 기록 파일 삭제
-     */
     public void resetAllVoteData() throws Exception {
         File voteDir = new File(VOTE_DATA_DIR);
         
         if (!voteDir.exists()) {
-            System.out.println("🔄 투표 데이터 디렉토리가 존재하지 않습니다.");
+            System.out.println("투표 데이터 디렉토리가 존재하지 않습니다.");
             return;
-        }
+        } else { } //디렉토리가 있음
         
         int deletedFiles = 0;
         
-        // 투표 파일들 삭제
+
         File[] voteFiles = voteDir.listFiles((dir, name) -> name.startsWith("vote_") && name.endsWith(".dat"));
         if (voteFiles != null) {
             for (File voteFile : voteFiles) {
                 if (voteFile.delete()) {
                     deletedFiles++;
                 } else {
-                    System.err.println("⚠️  파일 삭제 실패: " + voteFile.getName());
+                    System.err.println("파일 삭제 실패: " + voteFile.getName());
                 }
-            }
-        }
+            } 
+        } else { } //디렉토리가 있음
         
-        // 투표자 기록 파일 삭제
         File voterRecordFile = new File(VOTE_DATA_DIR, VOTER_RECORD_FILE);
         if (voterRecordFile.exists()) {
             if (voterRecordFile.delete()) {
-                System.out.println("🗑️  투표자 기록 파일이 삭제되었습니다.");
+                System.out.println("투표자 기록 파일이 삭제되었습니다.");
             } else {
-                System.err.println("⚠️  투표자 기록 파일 삭제 실패");
+                System.err.println("투표자 기록 파일 삭제 실패");
             }
-        }
-        
-        System.out.println("🧹 총 " + deletedFiles + "개의 투표 파일이 삭제되었습니다.");
-        System.out.println("✨ 투표 데이터 초기화가 완료되었습니다.");
+        }else { } //디렉토리가 있음
+        System.out.println("총 " + deletedFiles + "개의 투표 파일이 삭제되었습니다.");
+        System.out.println("투표 데이터 초기화가 완료되었습니다.");
     }
 }

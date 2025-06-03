@@ -1,12 +1,13 @@
 package util;
 
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.SecureRandom;
-import java.util.Base64;
 
 public class AESUtil {
 
@@ -36,9 +37,6 @@ public class AESUtil {
         return new String(decrypted, "UTF-8");
     }
 
-    //itialization Vector(초기화 벡터)
-    //같은 비밀번호라도 IV가 다르면 암호문이 매번 달라져요!
-    //복호화할 때도 같은 IV가 꼭 필요합니다
     public static byte[] generateIV() {
         byte[] iv = new byte[16];
         new SecureRandom().nextBytes(iv);
