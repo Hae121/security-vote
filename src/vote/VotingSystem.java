@@ -1,6 +1,8 @@
 package vote;
 
+import java.io.Console;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -15,12 +17,12 @@ public class VotingSystem {
     
     private UserManager userManager;
     private VoteManager voteManager;
-    private Scanner scanner;
+    private Scanner sc;
     
     public VotingSystem() {
         this.userManager = new UserManager();
         this.voteManager = new VoteManager();
-        this.scanner = new Scanner(System.in);
+        this.sc = new Scanner(System.in);
         initializeDirectories();
         initializeDefaultUsers();
     }
@@ -49,8 +51,8 @@ public class VotingSystem {
         while (true) {
             try {
                 showMainMenu();
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // 개행 문자 소비
+                int choice = sc.nextInt();
+                sc.nextLine(); // 개행 문자 소비
                 
                 switch (choice) {
                     case 1:
@@ -67,14 +69,14 @@ public class VotingSystem {
                 }
             } catch (Exception e) {
                 System.err.println("❌ 오류 발생: " + e.getMessage());
-                scanner.nextLine(); // 잘못된 입력 제거
+                sc.nextLine(); // 잘못된 입력 제거
             }
         }
     }
 
     private void resetVoteData() {
         System.out.print("⚠️  모든 투표 데이터를 초기화하시겠습니까? (y/n): ");
-        String confirm = scanner.nextLine().trim().toLowerCase();
+        String confirm = sc.nextLine().trim().toLowerCase();
         
         if (confirm.equals("y") || confirm.equals("yes")) {
             try {
@@ -95,15 +97,16 @@ public class VotingSystem {
         System.out.print("선택: ");
     }
     private void login() {
-        System.out.print("🔐 사용자 ID: ");
-        String id = scanner.nextLine().trim();
-        System.out.print("🔐 비밀번호: ");
-        String password = scanner.nextLine().trim();
+    	Console console = System.console();
+        System.out.print("사용자 ID: ");
+        String id = sc.nextLine().trim();
+        char[] password = console.readPassword("비밀번호: ");System.out.print("비밀번호: ");
+        Arrays.fill(password, ' ');
         
         try {
             UserDTO user = userManager.authenticate(id, password);
             if (user != null) {
-                System.out.println("✅ 로그인 성공! 환영합니다, " + user.getId() + "님");
+                System.out.println("로그인 성공! 환영합니다, " + user.getId() + "님");
                 
                 if (user.isAdmin()) {
                     adminMenu(user);
@@ -111,23 +114,23 @@ public class VotingSystem {
                     userMenu(user);
                 }
             } else {
-                System.out.println("❌ 로그인 실패: ID 또는 비밀번호가 일치하지 않습니다.");
+                System.out.println("로그인 실패: ID 또는 비밀번호가 일치하지 않습니다.");
             }
         } catch (Exception e) {
-            System.err.println("❌ 인증 오류: " + e.getMessage());
+            System.err.println("인증 오류: " + e.getMessage());
         }
     }
     
     private void userMenu(UserDTO user) {
         while (true) {
-            System.out.println("\n👤 사용자 메뉴 - " + user.getId());
+            System.out.println("\n사용자 메뉴 - " + user.getId());
             System.out.println("1. 투표하기");
             System.out.println("2. 로그아웃");
             System.out.print("선택: ");
             
             try {
-                int choice = scanner.nextInt();
-                scanner.nextLine();
+                int choice = sc.nextInt();
+                sc.nextLine();
                 
                 switch (choice) {
                     case 1:
@@ -141,7 +144,7 @@ public class VotingSystem {
                 }
             } catch (Exception e) {
                 System.err.println("❌ 오류 발생: " + e.getMessage());
-                scanner.nextLine();
+                sc.nextLine();
             }
         }
     }
@@ -155,8 +158,8 @@ public class VotingSystem {
             System.out.print("선택: ");
             
             try {
-                int choice = scanner.nextInt();
-                scanner.nextLine();
+                int choice = sc.nextInt();
+                sc.nextLine();
                 
                 switch (choice) {
                     case 1:
@@ -173,7 +176,7 @@ public class VotingSystem {
                 }
             } catch (Exception e) {
                 System.err.println("❌ 오류 발생: " + e.getMessage());
-                scanner.nextLine();
+                sc.nextLine();
             }
         }
     }
@@ -192,8 +195,8 @@ public class VotingSystem {
             }
             
             System.out.print("투표할 후보자 번호를 선택하세요: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();
+            int choice = sc.nextInt();
+            sc.nextLine();
             
             if (choice < 1 || choice > CANDIDATES.length) {
                 System.out.println("❌ 잘못된 후보자 번호입니다.");
@@ -203,7 +206,7 @@ public class VotingSystem {
             String selectedCandidate = CANDIDATES[choice - 1];
             System.out.println("🗳️  선택한 후보자: " + selectedCandidate);
             System.out.print("투표를 확정하시겠습니까? (y/n): ");
-            String confirm = scanner.nextLine().trim().toLowerCase();
+            String confirm = sc.nextLine().trim().toLowerCase();
             
             if (confirm.equals("y") || confirm.equals("yes")) {
                 voteManager.castVote(user.getId(), selectedCandidate);
@@ -214,7 +217,7 @@ public class VotingSystem {
             
         } catch (Exception e) {
             System.err.println("❌ 투표 오류: " + e.getMessage());
-            scanner.nextLine();
+            sc.nextLine();
         }
     }
     
